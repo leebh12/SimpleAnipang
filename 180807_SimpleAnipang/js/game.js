@@ -4,76 +4,128 @@ var ctx = canvas.getContext("2d");
 //var x = canvas.width/2;
 //var y = canvas.height-30;
 
-var rightPressed = false;
-var leftPressed = false;
+//const scenes = {
+//	MAINSCENE: 'mainscene',
+//	MENUSCENE: 'menuscene',
+//	CLEARSCENE: 'clearscene'
+//}
 
-    //벽돌에 대한 정의
-var brickRowCount = 6;
-var brickColumnCount = 8;
-var brickWidth = 60;
-var brickHeight = 60;
-var brickPadding = 10;
-var brickOffsetTop = 160;
-var brickOffsetLeft = 30;
+const scenes = {
+	MAINSCENE: 'mainscene',
+	MENUSCENE: 'menuscene',
+	CLEARSCENE: 'clearscene'
+}
+
+//scene
+var scene;
+
+//벽돌에 대한 정의
+var brickRowCount;
+var brickColumnCount;
+var brickWidth;
+var brickHeight;
+var brickPadding;
+var brickOffsetTop;
+var brickOffsetLeft;
 
 var score;
 var limit;
 
-    //마우스 이벤트를 처리하기 위한 변수
-var m_bIsDragged = false;
-    //이전 클릭블럭
-var m_bChoosedBrick_column=-1;
-var m_bChoosedBrick_row = -1;
-    
-var m_bPrevious_Coordinate_X = 0;
-var m_bPrevious_Coordinate_Y = 0;
+//마우스 이벤트를 처리하기 위한 변수
+var m_bIsDragged;
+//이전 클릭블럭
+var m_bChoosedBrick_column;
+var m_bChoosedBrick_row;
+
+var m_bPrevious_Coordinate_X;
+var m_bPrevious_Coordinate_Y;
 
 //블럭의 상태를 저장하기위한 변수
-var isMoving = false;
-var isSwapping = false;
-var EndSwapping = false;
+var isMoving;
+var isSwapping;
+var EndSwapping;
 var SwappingBlock1_row;
 var SwappingBlock1_column;
 var SwappingBlock2_row;
 var SwappingBlock2_column;
+var combo;
+var gameEndingFrame;
 
-var combo = 0;
 
-    //벽돌 생성
-var bricks = [];
-for(var row=0; row<brickRowCount; row++) {
-  bricks[row] = [];
-  for (var column = 0; column < brickColumnCount; column++) {
-      //status는 충돌을 감지하기 위한 코드. 현재는 필요없음.
-      bricks[row][column] = { x: 0, y: 0, status: 1, color: randomRange(0, 6) };
-  }
-}
+//터진 벽돌에 대한 이펙트
+var effect;
+var deletebrick;
+var deleteCount;
 
-//MapCoordinate[row][column] =  {x , y ,{ dx=x ,dy = 0 ,status 1 /2  , color 0 ~ 6 }}
+//벽돌 생성
+var bricks;
+var MapCoordinate;
 
-var MapCoordinate = [];
-for(var row=0; row<brickRowCount; row++) {
-  MapCoordinate[row] = [];
-  for (var column = 0; column <brickColumnCount ; column++) {
-      //status는 현재 벽돌의 상태
-      var colors = randomRange(0, 6);  
-      MapCoordinate[row][column] = {
-          x: 0, y: 0, brick: {
-              x: 0, y: brickOffsetTop - brickHeight * (brickRowCount - row), status: 1, color: colors,
-              sprite: new Sprite('./img/animal.png', [80 * 0, 71 * colors], [80, 71], 4, [0, 1, 2])
-          }
-      };//, dropPriority:brickRowCount-row}};
-  }
-}
-
-var tmpbrick = { x: 0, y: 0, status: 1 , color : 1};
-
+//사운드
+var BackGroundMusic;
 
 //timer 
-var start = null;
+var start;
 
-//scene
-var scene = 1;
+
+function init() {
+	//벽돌에 대한 정의
+	brickRowCount = 6;
+	brickColumnCount = 8;
+	brickWidth = 60;
+	brickHeight = 60;
+	brickPadding = 10;
+	brickOffsetTop = 160;
+	brickOffsetLeft = 30;
+
+	limit = 2;
+	score = 0;
+
+	//마우스 이벤트를 처리하기 위한 변수
+	m_bIsDragged = false;
+	m_bChoosedBrick_column = -1;
+	m_bChoosedBrick_row = -1;
+
+	m_bPrevious_Coordinate_X = 0;
+	m_bPrevious_Coordinate_Y = 0;
+
+	//블럭의 상태를 저장하기위한 변수
+	isMoving = false;
+	isSwapping = false;
+	EndSwapping = false;
+	combo = 0;
+	gameEndingFrame = 50;
+
+	//터진 벽돌에 대한 이펙트
+	effect = false;
+	deletebrick = [];
+	deleteCount = 0;
+
+	//벽돌 생성
+	bricks = [];
+	MapCoordinate = [];
+
+	for (var row = 0; row < brickRowCount; row++) {
+		MapCoordinate[row] = [];
+		for (var column = 0; column < brickColumnCount; column++) {
+			//status는 현재 벽돌의 상태
+			var colors = randomRange(0, 6);
+			MapCoordinate[row][column] = {
+				x: 0, y: 0, brick: {
+					x: 0, y: brickOffsetTop - brickHeight * (brickRowCount - row), status: 1, color: colors,
+					sprite: new Sprite('./img/animal.png', [80 * 0, 71 * colors], [80, 71], 4, [0, 1, 2])
+				}
+			};//, dropPriority:brickRowCount-row}};
+		}
+	}
+
+	//timer 
+	start = null;
+	
+	BackGroundMusic = new Audio('./sound/anipang_ingame.mp3');
+
+	//audio = new Audio('./sound/anipang_ingame.mp3');
+}
 
 //n1부터 n2까지의 숫자 중 랜덤숫자 리턴. 블럭 색상 랜덤생성
 function randomRange(n1, n2) {
@@ -144,7 +196,7 @@ function mouseDownHandler(e)
 
     //    }
     //m_bIsDragged = true;
-	if(scene == 1)
+	if(scene == scenes.MAINSCENE)
 	{
     //몇번째 위치의 블록인지 계산
     for(var column=0; column<brickColumnCount; column++)
@@ -176,25 +228,23 @@ function mouseDownHandler(e)
 
 function mouseUpHandler(e)
 {
-	if (isMoving)
-		return;
+	//if (isMoving)
+	//	return;
+
     //이벤트의 영역이 타겟 블럭의 x, y값 블럭 영역 내에 있으면 -> 어떤 블럭을 찍었는지 판별
     //if (e.layerX > target_brick.x && e.layerX < target_brick.x + brickWidth && e.layerY > target_brick.y && e.layerY < target_brick.y + brickHeight)
-	if(scene  == 2)
+	if(scene === scenes.MENUSCENE)
 	{
-		if( e.layerX < canvas.width && e.layerY < canvas.height)
-        {
-            var audio = new Audio('./sound/anipang_ingame.mp3');
-            audio.play();
-
-			MainScene();
-		}
+		//if( e.layerX < canvas.width && e.layerY < canvas.height)
+		MainScene();
+		BackGroundMusic.play();
 	}
-	if(scene == 3)
+	if (scene == scenes.CLEARSCENE)
 	{
-		MenuScene();
+		BackGroundMusic.pause();
+		InitScene();
 	}
-    if (m_bIsDragged && scene == 1)
+    if (m_bIsDragged && scene == scenes.MAINSCENE)
 	{
 		combo = 0;
 
@@ -266,16 +316,17 @@ function mouseUpHandler(e)
 function dragBlock() {
 	SwapBlock(SwappingBlock1_row, SwappingBlock1_column, SwappingBlock2_row, SwappingBlock2_column);
 	if ((blockCollisionCheck(SwappingBlock1_row, SwappingBlock1_column) || blockCollisionCheck(SwappingBlock2_row, SwappingBlock2_column))) {
-		matchBlock();
-		combo += 1;
-		score += combo*10;
+
+		limit -= 1;
+		//combo++;
+		//score += combo*10;
 	}
 }
 
 function matchBlock() {
-	limit -= 1;
-	var audio = new Audio('./sound/sound 22.mp3');
-	audio.play();
+
+	var PoppingSound = new Audio('./sound/sound 22.mp3');
+	PoppingSound.play();
 }
 
 function SwapBlock(Des_row, Des_column, Src_row, Src_column)
@@ -427,6 +478,7 @@ function Detection_Row(row, column){
 		MapCoordinate[row][column].brick.status = 2;
 		MapCoordinate[row][column+1].brick.status = 2;
 		MapCoordinate[row][column + 2].brick.status = 2;
+		matchBlock();
 		combo++;
 		score += combo * 10;
 	}
@@ -447,6 +499,7 @@ function Detection_Column(row, column){
 		MapCoordinate[row][column].brick.status = 2;
 		MapCoordinate[row+1][column].brick.status = 2;
 		MapCoordinate[row + 2][column].brick.status = 2;
+		matchBlock();
 		combo++;
 		score += combo * 10;
 	}
@@ -483,11 +536,7 @@ function initBricks()
     for (var row = 0; row < brickRowCount; row++) 
 	{
         for (var column = 0; column < brickColumnCount; column++) 
-		{
-            //각 벽돌의 위치 계산
-            //MapCoordinate[row][column].x = (column * (brickWidth + brickPadding)) + brickOffsetLeft;
-            //MapCoordinate[row][column].y = (row * (brickHeight + brickPadding)) + brickOffsetTop;
-			
+		{			
 			MapCoordinate[row][column].x = (column * (brickWidth + brickPadding)) + brickOffsetLeft;
             MapCoordinate[row][column].y = (row * (brickHeight + brickPadding)) + brickOffsetTop ;
 			
@@ -504,11 +553,7 @@ function initBricks()
 
     //벽돌 그리기
 function drawBricks() {
-    //var backimg = new Image();
-    //backimg.src = './img/backimg.png';
-    //var a = ctx.createPattern(backimg, 'repeat');
-    //ctx.fillStyle = a;
-    //ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 		var backimg = new Image();
 		backimg.src = './img/backimg2.jpg';
 		ctx.drawImage(backimg , 0 , 0 , 640 ,640 );
@@ -734,9 +779,6 @@ function shiftBlock() {
 	
 }
 
-var effect = false;
-var deletebrick = [];
-var deleteCount = 0;
 function drawEffect() {
 
     for (var a = 0; a < deletebrick.length; a++) {
@@ -762,7 +804,7 @@ function drawEffect() {
     if (deleteCount > 50) {
         effect = false;
         deleteCount = 0; 
-        deletebrick = [];
+		deletebrick = [];
     }
     if (isMoving === false) {
     }
@@ -770,51 +812,45 @@ function drawEffect() {
 }
 
 function draw(timestamp) {
-  
-  if (!start) start = timestamp;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawBricks();
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+	drawBricks();
 	drawEffect();
+	drawScore();
 
-      if (isMoving == false) {
-          collisionDetection();
-		  shiftBlock();
-	  }
-  drawScore();
+	if (isMoving == false) {
+		collisionDetection();
+		shiftBlock();
 
-	//var progress = timestamp - start;
-       
-     //   if (progress < 1000) {
-     //   }
-	//	else
-	//	{
-			
-			if(limit == 0 ) 
-			{
-				  GameClearScene();
-				  return false;
-      }
+		if (limit == 0) {
+			gameEndingFrame--;
+			if (gameEndingFrame < 0) {
+				BackGroundMusic.pause();
+				var GameClearSound = new Audio('./sound/sound 23.mp3');
+				GameClearSound.play();
+				GameClearScene();
+				return false;
+			}
+		}
+	}	
 
-      if (document.getElementById('prog').value < 2) {
-          var audio = new Audio('./sound/sound 1.mp3');
-          audio.play();
-          GameClearScene();
-          return false;
-      }
+	if (document.getElementById('prog').value < 1) {
+		BackGroundMusic.pause();
+		var GameOverSound = new Audio('./sound/sound 1.mp3');
+		GameOverSound.play();
+		GameOverScene();
+		return false;
+	}
 
-			//셔플
-			if(!canMoreMove())
-			{
-				shuffleBlock();
-				console.log("shuffle");
-				start = null;
-			//	window.requestAnimationFrame(draw);
-              }
-
-
-      window.requestAnimationFrame(draw);
-	//	}
+	//셔플
+	if(!canMoreMove())
+	{
+		shuffleBlock();
+		console.log("shuffle");
+		clearTimeout(start);
+	}
+	window.requestAnimationFrame(draw);
 }
 
 function shuffleBlock()
@@ -852,38 +888,45 @@ function canMoreMove()
 
 function InitScene()
 {
-	//GameOverScene();
-	//MainScene();
+	init();
     MenuScene();
 }
 
 function MainScene()
 {
+	scene = scenes.MAINSCENE;
 	progr(60);
 	initBricks();
 	window.requestAnimationFrame(draw);
-	scene = 1;
-	limit = 20;
-	score = 0;
 }
 
 function MenuScene()
 {
-	scene = 2;
+	scene = scenes.MENUSCENE;
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.font="60px Georgia";
-	ctx.fillText("GameStart", 230, 400);
+	ctx.font = "60px Georgia";
+	ctx.fillStyle = 'Black';
+	ctx.fillText("GameStart", canvas.width / 2 - 140, canvas.height / 2 + 40);
 }
 
 
 function GameClearScene()
 {
-  //ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-   ctx.font="60px Georgia";
-	ctx.fillText("GameClear",   0,400);
-scene = 3;
-score = 0;
+	scene = scenes.CLEARSCENE;
+	ctx.font="60px Georgia";
+	ctx.fillStyle = 'Black';
+	ctx.fillText("GameClear", canvas.width / 2 - 140, canvas.height / 2 + 40);
+
+	clearTimeout(start);
+}
+
+function GameOverScene() {
+	scene = scenes.CLEARSCENE;
+	ctx.font = "60px Georgia";
+	ctx.fillStyle = 'Black';
+	ctx.fillText("GameOver", canvas.width / 2 - 140, canvas.height / 2 + 40);
+
+	clearTimeout(start);
 }
 
 InitScene();
