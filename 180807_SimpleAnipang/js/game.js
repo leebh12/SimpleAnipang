@@ -78,7 +78,7 @@ function init() {
 	brickOffsetTop = 160;
 	brickOffsetLeft = 30;
 
-	limit = 20;
+	limit = 2;
 	score = 0;
 
 	//마우스 이벤트를 처리하기 위한 변수
