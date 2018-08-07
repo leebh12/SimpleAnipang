@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Gamedev Canvas Workshop</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            background: #eee;
+            display: block;
+            margin: 0 auto;
+        }
+		progress {
+		width:640px;
+		height:50px;
+		}
+    </style>
+   
+</head>
+<body>
+
+    <canvas id="myCanvas" width="640" height="640"></canvas>
+    <center>
+        <progress id="prog" value="60" max="60" ></progress>
+        
+    </center>
+    <script type="text/javascript" src="js/sprite.js" charset='euc-kr'></script>
+    <script type="text/javascript" src="js/game.js" charset='euc-kr'></script>
+    <script>
+        function progr(al) {
+            var bar = document.getElementById('prog');
+            bar.value = al;
+            al--;
+            var sim = setTimeout("progr(" + al + ")", 1000);
+            if (al <= 0) {
+                clearTimeout(sim);
+            }
+        }
+    //    progr(100);
+    </script>
+</body>
+</html>
